@@ -3,521 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weird Talking Face - Subtitled Quotes</title>
+    <title>Movie Quote API Tester</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460);
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-
-        .container {
-            text-align: center;
-            position: relative;
-        }
-
-        .face {
-            width: 300px;
-            height: 350px;
-            background: radial-gradient(circle, #ff6b6b, #ee5a24);
-            border-radius: 50% 50% 45% 55%;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            animation: float 3s ease-in-out infinite;
-        }
-
-        .face:hover {
-            transform: scale(1.1);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-        }
-
-        .eyes {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 40px;
-        }
-
-        .eye {
-            width: 45px;
-            height: 60px;
-            background: white;
-            border-radius: 50%;
-            position: relative;
-            animation: blink 4s infinite;
-        }
-
-        .pupil {
-            width: 25px;
-            height: 25px;
-            background: black;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: lookAround 6s infinite;
-        }
-
-        .mouth {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 60px;
-            background: #2d1b69;
-            border-radius: 0 0 60px 60px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .lips {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 20px;
-            background: #ff3838;
-            border-radius: 50px 50px 0 0;
-            transition: all 0.2s ease;
-        }
-
-        .speaking .lips {
-            animation: speak 0.2s infinite alternate;
-        }
-
-        .teeth {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 15px;
-            background: white;
-            border-radius: 10px;
-        }
-
-        .countdown {
-            position: absolute;
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            background: rgba(0,0,0,0.3);
-            padding: 10px 20px;
-            border-radius: 15px;
-            backdrop-filter: blur(5px);
-        }
-
-        .countdown.active {
-            opacity: 1;
-        }
-
-        .quote-display {
-            position: absolute;
-            top: 400px;
-            left: 50%;
-            transform: translateX(-50%);
-            max-width: 600px;
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
             padding: 20px;
-            background: rgba(0,0,0,0.7);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            opacity: 0;
-            transition: all 0.3s ease;
+            line-height: 1.6;
         }
-
-        .quote-display.active {
-            opacity: 1;
-            transform: translateX(-50%) translateY(-20px);
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
         }
-
-        .quote-text {
-            font-size: 1.5rem;
-            color: #fff;
-            margin-bottom: 10px;
-            font-style: italic;
-            min-height: 80px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            line-height: 1.5;
+        .success { color: #2e7d32; }
+        .error { color: #c62828; }
+        .proxy-status {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
         }
-
-        .word {
-            margin-right: 5px;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s ease;
-            display: inline-block;
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
         }
-
-        .word.visible {
-            opacity: 1;
-            transform: translateY(0);
+        button:hover {
+            background-color: #3367d6;
         }
-
-        .word.highlight {
-            color: #ffd700;
-            font-weight: bold;
-            text-shadow: 0 0 5px rgba(255,215,0,0.5);
-        }
-
-        .quote-author {
-            font-size: 1.2rem;
-            color: #ffd700;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 15px;
-            opacity: 0;
-            transform: scale(0.9);
-            transition: all 0.5s ease 0.2s;
-        }
-
-        .quote-author.visible {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .instructions {
-            position: absolute;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #fff;
-            font-size: 1.1rem;
-            opacity: 0.7;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-
-        @keyframes blink {
-            0%, 90%, 100% { height: 60px; }
-            95% { height: 5px; }
-        }
-
-        @keyframes lookAround {
-            0%, 100% { transform: translate(-50%, -50%); }
-            25% { transform: translate(-70%, -50%); }
-            75% { transform: translate(-30%, -50%); }
-        }
-
-        @keyframes speak {
-            0% { transform: translateX(-50%) scaleY(1); }
-            100% { transform: translateX(-50%) scaleY(0.7); }
-        }
-
-        .glitch {
-            animation: glitch 0.5s infinite;
-        }
-
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            10% { transform: translate(-2px, 2px); }
-            20% { transform: translate(2px, -2px); }
-            30% { transform: translate(-2px, 2px); }
-            40% { transform: translate(2px, -2px); }
-            50% { transform: translate(-2px, 2px); }
-            60% { transform: translate(2px, -2px); }
-            70% { transform: translate(-2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            90% { transform: translate(-2px, 2px); }
-            100% { transform: translate(0); }
+        pre {
+            background-color: #333;
+            color: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="face" id="face">
-            <div class="eyes">
-                <div class="eye">
-                    <div class="pupil"></div>
-                </div>
-                <div class="eye">
-                    <div class="pupil"></div>
-                </div>
-            </div>
-            <div class="mouth" id="mouth">
-                <div class="teeth"></div>
-                <div class="lips" id="lips"></div>
-            </div>
-        </div>
-        
-        <div class="countdown" id="countdown"></div>
-        
-        <div class="quote-display" id="quoteDisplay">
-            <div class="quote-text" id="quoteText"></div>
-            <div class="quote-author" id="quoteAuthor"></div>
-        </div>
-        
-        <div class="instructions">Click the face to hear a random quote!</div>
+    <h1>Movie Quote API Tester</h1>
+    <p>Testing endpoint: <code>https://quoteapi.pythonanywhere.com/random</code></p>
+    
+    <button id="fetchBtn">Get Random Quote</button>
+    
+    <div id="result">
+        <p>Click the button to test</p>
+        <p class="proxy-status" id="proxyStatus"></p>
     </div>
 
     <script>
-        const face = document.getElementById('face');
-        const mouth = document.getElementById('mouth');
-        const lips = document.getElementById('lips');
-        const countdown = document.getElementById('countdown');
-        const quoteDisplay = document.getElementById('quoteDisplay');
-        const quoteText = document.getElementById('quoteText');
-        const quoteAuthor = document.getElementById('quoteAuthor');
-
-        let isPlaying = false;
-        let currentUtterance = null;
-        let currentQuote = null;
-        let countdownInterval = null;
-        let resetTimeout = null;
-
-        // CORS proxy URL
-        const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
-        const API_URL = "https://quoteapi.pythonanywhere.com/random";
-
-        // Initialize speech synthesis
-        function initSpeech() {
-            speechSynthesis.onvoiceschanged = function() {
-                console.log('Voices loaded');
-            };
-        }
-
-        // Reset the game to initial state
-        function resetGame() {
-            clearInterval(countdownInterval);
-            clearTimeout(resetTimeout);
-            speechSynthesis.cancel();
-            
-            face.classList.remove('glitch');
-            mouth.classList.remove('speaking');
-            countdown.classList.remove('active');
-            quoteDisplay.classList.remove('active');
-            
-            isPlaying = false;
-            currentUtterance = null;
-            currentQuote = null;
-            countdownInterval = null;
-            resetTimeout = null;
-        }
-
-        // Speak text with word-by-word subtitles
-        function speakText(text) {
-            if (!text || !('speechSynthesis' in window)) return;
-            
-            // Clear previous subtitles
-            quoteText.innerHTML = '';
-            quoteAuthor.className = 'quote-author';
-            
-            // Split text into words
-            const words = text.split(' ');
-            let currentWord = 0;
-            
-            // Create word elements
-            words.forEach(word => {
-                const wordSpan = document.createElement('span');
-                wordSpan.className = 'word';
-                wordSpan.textContent = word + ' ';
-                quoteText.appendChild(wordSpan);
-            });
-            
-            // Show the quote display
-            quoteDisplay.classList.add('active');
-            
-            // Create utterance
-            speechSynthesis.cancel();
-            currentUtterance = new SpeechSynthesisUtterance(text);
-            
-            // Configure speech settings
-            currentUtterance.rate = 0.8 + Math.random() * 0.4;
-            currentUtterance.pitch = 0.5 + Math.random() * 0.5;
-            currentUtterance.volume = 0.9;
-            
-            // Voice selection
-            const voices = speechSynthesis.getVoices();
-            if (voices.length > 0) {
-                const weirdVoices = voices.filter(voice => 
-                    voice.name.includes('Robot') || 
-                    voice.name.includes('Whisper') ||
-                    voice.lang !== navigator.language
-                );
-                currentUtterance.voice = weirdVoices.length > 0 ? 
-                    weirdVoices[Math.floor(Math.random() * weirdVoices.length)] :
-                    voices[Math.floor(Math.random() * voices.length)];
+        // List of CORS proxies to try
+        const proxyServers = [
+            {
+                name: "CORS Anywhere",
+                url: "https://cors-anywhere.herokuapp.com/",
+                needsEncoding: false
+            },
+            {
+                name: "All Origins",
+                url: "https://api.allorigins.win/get?url=",
+                needsEncoding: true
+            },
+            {
+                name: "Proxy CORS",
+                url: "https://proxy.cors.sh/",
+                needsEncoding: false,
+                headers: {
+                    'x-cors-api-key': 'temp_0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p' // Free temporary key
+                }
+            },
+            {
+                name: "CORS Proxy",
+                url: "https://corsproxy.io/?",
+                needsEncoding: true
+            },
+            {
+                name: "Whatever Origin",
+                url: "https://whateverorigin.org/get?url=",
+                needsEncoding: true
             }
+        ];
+
+        const fetchBtn = document.getElementById('fetchBtn');
+        const resultDiv = document.getElementById('result');
+        const proxyStatus = document.getElementById('proxyStatus');
+
+        fetchBtn.addEventListener('click', async () => {
+            resultDiv.innerHTML = "<p>Loading... Trying different proxies...</p>";
+            proxyStatus.textContent = "";
             
-            // Word timing handler
-            currentUtterance.onboundary = (event) => {
-                if (event.name === 'word') {
-                    const wordElements = document.querySelectorAll('.word');
+            const apiUrl = "https://quoteapi.pythonanywhere.com/random";
+            let lastError = null;
+
+            // Try each proxy in sequence
+            for (const proxy of proxyServers) {
+                try {
+                    proxyStatus.textContent = `Trying ${proxy.name} proxy...`;
                     
-                    // Remove highlight from previous word
-                    if (currentWord > 0) {
-                        wordElements[currentWord - 1].classList.remove('highlight');
+                    let fetchUrl;
+                    if (proxy.needsEncoding) {
+                        fetchUrl = proxy.url + encodeURIComponent(apiUrl);
+                    } else {
+                        fetchUrl = proxy.url + apiUrl;
                     }
+
+                    const options = {
+                        headers: proxy.headers || {}
+                    };
+
+                    const response = await fetch(fetchUrl, options);
                     
-                    // Show and highlight current word
-                    if (currentWord < wordElements.length) {
-                        wordElements[currentWord].classList.add('visible', 'highlight');
-                        currentWord++;
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                }
-            };
-            
-            // Event handlers
-            currentUtterance.onstart = function() {
-                face.classList.add('glitch');
-                mouth.classList.add('speaking');
-            };
-            
-            currentUtterance.onend = function() {
-                // Remove highlight from last word
-                const wordElements = document.querySelectorAll('.word');
-                if (wordElements.length > 0) {
-                    wordElements[wordElements.length - 1].classList.remove('highlight');
-                }
-                
-                face.classList.remove('glitch');
-                mouth.classList.remove('speaking');
-                showGuessPrompt();
-            };
-            
-            currentUtterance.onerror = function() {
-                face.classList.remove('glitch');
-                mouth.classList.remove('speaking');
-                showGuessPrompt();
-            };
-            
-            // Speak the text
-            speechSynthesis.speak(currentUtterance);
-        }
 
-        // Show "Guess the source" prompt
-        function showGuessPrompt() {
-            countdown.textContent = "Who said this?";
-            countdown.classList.add('active');
-            
-            setTimeout(() => {
-                startCountdown();
-            }, 1500);
-        }
+                    const data = await response.json();
+                    
+                    // Handle different proxy response formats
+                    let quoteData;
+                    if (proxy.url.includes("allorigins.win") || proxy.url.includes("whateverorigin.org")) {
+                        quoteData = JSON.parse(data.contents);
+                    } else if (proxy.url.includes("corsproxy.io")) {
+                        quoteData = data;
+                    } else {
+                        quoteData = data;
+                    }
 
-        // Countdown timer
-        function startCountdown() {
-            clearInterval(countdownInterval);
-            
-            let count = 10;
-            countdown.textContent = count;
-            
-            countdownInterval = setInterval(() => {
-                count--;
-                countdown.textContent = count;
-                
-                if (count <= 0) {
-                    clearInterval(countdownInterval);
-                    countdown.classList.remove('active');
-                    revealAnswer();
+                    resultDiv.innerHTML = `
+                        <p class="success"><strong>Success using ${proxy.name} proxy!</strong></p>
+                        <pre>${JSON.stringify(quoteData, null, 2)}</pre>
+                        <p><strong>Quote:</strong> ${quoteData.quote || 'No quote found'}</p>
+                        <p><strong>Movie:</strong> ${quoteData.movie_name || quoteData.movie_title || 'Unknown'}</p>
+                    `;
+                    proxyStatus.textContent = `Working proxy: ${proxy.name}`;
+                    return; // Success - exit the loop
+                } catch (error) {
+                    lastError = error;
+                    console.error(`Failed with ${proxy.name}:`, error);
+                    continue; // Try next proxy
                 }
-            }, 1000);
-        }
-
-        // Reveal the quote source
-        function revealAnswer() {
-            if (currentQuote) {
-                quoteText.innerHTML = ''; // Will be set by speakText
-                quoteAuthor.textContent = currentQuote.author ? `— ${currentQuote.author}` : "— Unknown";
-                
-                // Speak the reveal with subtitles
-                const revealText = currentQuote.author ? 
-                    `The quote was by ${currentQuote.author}` : 
-                    "The author is unknown";
-                speakText(revealText);
-                
-                // Show author after a delay
-                setTimeout(() => {
-                    quoteAuthor.classList.add('visible');
-                }, 500);
-                
-                resetTimeout = setTimeout(() => {
-                    resetGame();
-                }, 8000);
             }
-        }
 
-        // Fetch a random quote from the API
-        async function fetchRandomQuote() {
-            try {
-                const response = await fetch(CORS_PROXY + API_URL);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch quote');
-                }
-                const data = await response.json();
-                
-                // Handle the API response format
-                if (data.Quotes && data.Quotes.length > 0) {
-                    return data.Quotes[0]; // Return first quote in array
-                }
-                return {
-                    quote: data.quote || "No quote found",
-                    author: data.author || "Unknown"
-                };
-            } catch (error) {
-                console.error('Error fetching quote:', error);
-                return null;
-            }
-        }
-
-        // Main click handler
-        face.addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (isPlaying) {
-                console.log('Already playing, ignoring click');
-                return;
-            }
-            
-            isPlaying = true;
-            resetGame();
-            
-            currentQuote = await fetchRandomQuote();
-            
-            if (!currentQuote) {
-                quoteText.innerHTML = '<span class="word visible">Failed</span> <span class="word visible">to</span> <span class="word visible">fetch</span> <span class="word visible">quote.</span>';
-                quoteAuthor.textContent = "";
-                quoteDisplay.classList.add('active');
-                isPlaying = false;
-                
-                resetTimeout = setTimeout(() => {
-                    quoteDisplay.classList.remove('active');
-                }, 3000);
-                return;
-            }
-            
-            console.log('Got quote:', currentQuote.quote);
-            speakText(currentQuote.quote);
+            // If all proxies failed
+            resultDiv.innerHTML = `
+                <p class="error">All proxy attempts failed. Last error: ${lastError?.message || 'Unknown error'}</p>
+                <p>Possible solutions:</p>
+                <ol>
+                    <li>The API server might be down - try <a href="${apiUrl}" target="_blank">accessing it directly</a></li>
+                    <li>Your network might be blocking requests - try a different network</li>
+                    <li>The API might require authentication - contact support: enesjashari2004@gmail.com</li>
+                    <li>Try again later - the proxies might be temporarily unavailable</li>
+                </ol>
+            `;
+            proxyStatus.textContent = "All proxies failed";
         });
-
-        // Initialize speech synthesis when page loads
-        window.addEventListener('load', initSpeech);
     </script>
 </body>
 </html>
