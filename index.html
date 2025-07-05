@@ -11,15 +11,53 @@
             background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460);
             font-family: 'Arial', sans-serif;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .subtitle-area {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 20px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            display: none;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .subtitle-area.active {
+            display: flex;
+        }
+
+        .subtitle-text {
+            font-size: 1.8rem;
+            color: #fff;
+            text-align: center;
+            line-height: 1.4;
+            max-width: 100%;
+            word-wrap: break-word;
         }
 
         .container {
             text-align: center;
             position: relative;
+            margin-top: 120px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
         .face {
@@ -111,19 +149,22 @@
 
         .countdown {
             position: absolute;
-            top: -100px;
+            top: 400px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: bold;
             color: #fff;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             opacity: 0;
             transition: opacity 0.3s ease;
             background: rgba(0,0,0,0.3);
-            padding: 10px 20px;
+            padding: 15px 25px;
             border-radius: 15px;
             backdrop-filter: blur(5px);
+            white-space: nowrap;
+            max-width: 90vw;
+            text-align: center;
         }
 
         .countdown.active {
@@ -132,7 +173,7 @@
 
         .quote-display {
             position: absolute;
-            top: 400px;
+            top: 480px;
             left: 50%;
             transform: translateX(-50%);
             max-width: 600px;
@@ -198,14 +239,42 @@
             transform: scale(1);
         }
 
-        .instructions {
-            position: absolute;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #fff;
-            font-size: 1.1rem;
-            opacity: 0.7;
+
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 150px;
+                padding: 0 20px;
+            }
+            
+            .face {
+                width: 250px;
+                height: 290px;
+            }
+            
+            .subtitle-text {
+                font-size: 1.4rem;
+                padding: 0 10px;
+            }
+            
+            .countdown {
+                font-size: 1.5rem;
+                top: 350px;
+                padding: 12px 20px;
+                max-width: 85vw;
+            }
+            
+            .quote-display {
+                max-width: 90%;
+                top: 420px;
+            }
+            
+            .quote-text {
+                font-size: 1.2rem;
+            }
+            
+
         }
 
         @keyframes float {
@@ -249,6 +318,10 @@
     </style>
 </head>
 <body>
+    <div class="subtitle-area" id="subtitleArea">
+        <div class="subtitle-text" id="subtitleText"></div>
+    </div>
+
     <div class="container">
         <div class="face" id="face">
             <div class="eyes">
@@ -271,8 +344,7 @@
             <div class="quote-text" id="quoteText"></div>
             <div class="quote-author" id="quoteAuthor"></div>
         </div>
-        
-        <div class="instructions">Click the face to hear a random quote!</div>
+
     </div>
 
     <script>
@@ -283,6 +355,8 @@
         const quoteDisplay = document.getElementById('quoteDisplay');
         const quoteText = document.getElementById('quoteText');
         const quoteAuthor = document.getElementById('quoteAuthor');
+        const subtitleArea = document.getElementById('subtitleArea');
+        const subtitleText = document.getElementById('subtitleText');
 
         let isPlaying = false;
         let currentUtterance = null;
@@ -290,9 +364,8 @@
         let countdownInterval = null;
         let resetTimeout = null;
 
-        // CORS proxy URL
-        const CORS_PROXY = "https://corsproxy.io/?";
-        const API_URL = "https://quoteapi.pythonanywhere.com/random";
+        // New API URL
+        const API_URL = "https://peaceful-spirit-production.up.railway.app/v1/quote/";
 
         // Initialize speech synthesis
         function initSpeech() {
@@ -311,12 +384,54 @@
             mouth.classList.remove('speaking');
             countdown.classList.remove('active');
             quoteDisplay.classList.remove('active');
+            subtitleArea.classList.remove('active');
             
             isPlaying = false;
             currentUtterance = null;
             currentQuote = null;
             countdownInterval = null;
             resetTimeout = null;
+        }
+
+        // Update subtitle display (top of screen)
+        function updateSubtitle(text) {
+            subtitleText.innerHTML = '';
+            
+            if (!text) {
+                subtitleArea.classList.remove('active');
+                return;
+            }
+
+            // Split text into words and create elements
+            const words = text.split(' ');
+            let currentWordIndex = 0;
+            
+            words.forEach((word, index) => {
+                const wordSpan = document.createElement('span');
+                wordSpan.className = 'word';
+                wordSpan.textContent = word + ' ';
+                subtitleText.appendChild(wordSpan);
+            });
+            
+            subtitleArea.classList.add('active');
+            
+            // Function to highlight current word
+            function highlightWord(wordIndex) {
+                const wordElements = subtitleText.querySelectorAll('.word');
+                
+                // Remove previous highlights
+                wordElements.forEach(el => el.classList.remove('highlight'));
+                
+                // Show words up to current index
+                for (let i = 0; i <= wordIndex && i < wordElements.length; i++) {
+                    wordElements[i].classList.add('visible');
+                    if (i === wordIndex) {
+                        wordElements[i].classList.add('highlight');
+                    }
+                }
+            }
+            
+            return highlightWord;
         }
 
         // Speak text with word-by-word subtitles
@@ -327,20 +442,9 @@
             quoteText.innerHTML = '';
             quoteAuthor.className = 'quote-author';
             
-            // Split text into words
-            const words = text.split(' ');
+            // Set up subtitle display at top
+            const highlightWord = updateSubtitle(text);
             let currentWord = 0;
-            
-            // Create word elements
-            words.forEach(word => {
-                const wordSpan = document.createElement('span');
-                wordSpan.className = 'word';
-                wordSpan.textContent = word + ' ';
-                quoteText.appendChild(wordSpan);
-            });
-            
-            // Show the quote display
-            quoteDisplay.classList.add('active');
             
             // Create utterance
             speechSynthesis.cancel();
@@ -351,34 +455,90 @@
             currentUtterance.pitch = 0.5 + Math.random() * 0.5;
             currentUtterance.volume = 0.9;
             
-            // Voice selection
+            // Voice selection - English voices with weird effects
             const voices = speechSynthesis.getVoices();
+            console.log('Available voices:', voices.map(v => v.name + ' (' + v.lang + ')'));
+            
             if (voices.length > 0) {
-                const weirdVoices = voices.filter(voice => 
-                    voice.name.includes('Robot') || 
-                    voice.name.includes('Whisper') ||
-                    voice.lang !== navigator.language
+                const englishVoices = voices.filter(voice => 
+                    voice.lang.startsWith('en')
                 );
-                currentUtterance.voice = weirdVoices.length > 0 ? 
-                    weirdVoices[Math.floor(Math.random() * weirdVoices.length)] :
-                    voices[Math.floor(Math.random() * voices.length)];
+                
+                if (englishVoices.length > 0) {
+                    // Log available English voices for debugging
+                    console.log('English voices:', englishVoices.map(v => v.name));
+                    
+                    // Select random English voice
+                    const selectedVoice = englishVoices[Math.floor(Math.random() * englishVoices.length)];
+                    currentUtterance.voice = selectedVoice;
+                    console.log('Selected voice:', selectedVoice.name);
+                } else {
+                    console.log('No English voices found, using default');
+                }
+            }
+            
+            // Create vocaloid-like singing effects
+            const vocaloidMode = Math.random() < 0.7; // 70% chance for vocaloid effect
+            
+            if (vocaloidMode) {
+                // Vocaloid singing effects
+                const vocaloidStyles = [
+                    // Miku-like high pitched
+                    { rate: 1.1, pitch: 1.8, volume: 0.9 },
+                    // Rin-like energetic
+                    { rate: 1.3, pitch: 1.6, volume: 0.9 },
+                    // Luka-like deeper but still high
+                    { rate: 0.9, pitch: 1.4, volume: 0.9 },
+                    // Len-like boyish
+                    { rate: 1.2, pitch: 1.3, volume: 0.9 },
+                    // Gumi-like sweet
+                    { rate: 1.0, pitch: 1.7, volume: 0.9 },
+                    // IA-like smooth
+                    { rate: 0.8, pitch: 1.5, volume: 0.9 }
+                ];
+                
+                const style = vocaloidStyles[Math.floor(Math.random() * vocaloidStyles.length)];
+                currentUtterance.rate = style.rate;
+                currentUtterance.pitch = style.pitch;
+                currentUtterance.volume = style.volume;
+                
+                console.log('Vocaloid mode activated:', style);
+                
+                // Add musical pauses and emphasis to make it more song-like
+                const musicText = text.replace(/\./g, '♪').replace(/,/g, '♫').replace(/!/g, '♪!').replace(/\?/g, '♫?');
+                currentUtterance.text = musicText;
+                
+            } else {
+                // Regular weird voice effects
+                const effects = Math.random();
+                if (effects < 0.25) {
+                    // Robot-like
+                    currentUtterance.rate = 0.6;
+                    currentUtterance.pitch = 0.4;
+                    currentUtterance.volume = 0.9;
+                } else if (effects < 0.5) {
+                    // Chipmunk-like
+                    currentUtterance.rate = 1.4;
+                    currentUtterance.pitch = 1.9;
+                    currentUtterance.volume = 0.9;
+                } else if (effects < 0.75) {
+                    // Deep and dramatic
+                    currentUtterance.rate = 0.7;
+                    currentUtterance.pitch = 0.3;
+                    currentUtterance.volume = 0.9;
+                } else {
+                    // Fast and jittery
+                    currentUtterance.rate = 1.6;
+                    currentUtterance.pitch = 1.1;
+                    currentUtterance.volume = 0.9;
+                }
             }
             
             // Word timing handler
             currentUtterance.onboundary = (event) => {
                 if (event.name === 'word') {
-                    const wordElements = document.querySelectorAll('.word');
-                    
-                    // Remove highlight from previous word
-                    if (currentWord > 0) {
-                        wordElements[currentWord - 1].classList.remove('highlight');
-                    }
-                    
-                    // Show and highlight current word
-                    if (currentWord < wordElements.length) {
-                        wordElements[currentWord].classList.add('visible', 'highlight');
-                        currentWord++;
-                    }
+                    highlightWord(currentWord);
+                    currentWord++;
                 }
             };
             
@@ -389,11 +549,9 @@
             };
             
             currentUtterance.onend = function() {
-                // Remove highlight from last word
-                const wordElements = document.querySelectorAll('.word');
-                if (wordElements.length > 0) {
-                    wordElements[wordElements.length - 1].classList.remove('highlight');
-                }
+                // Remove highlight from subtitle
+                const wordElements = subtitleText.querySelectorAll('.word');
+                wordElements.forEach(el => el.classList.remove('highlight'));
                 
                 face.classList.remove('glitch');
                 mouth.classList.remove('speaking');
@@ -412,7 +570,10 @@
 
         // Show "Guess the source" prompt
         function showGuessPrompt() {
-            countdown.textContent = "Who said this?";
+            // Hide subtitle area
+            subtitleArea.classList.remove('active');
+            
+            countdown.textContent = "What show is this from?";
             countdown.classList.add('active');
             
             setTimeout(() => {
@@ -439,16 +600,23 @@
             }, 1000);
         }
 
-        // Reveal the quote source
+        // Reveal the quote source (show)
         function revealAnswer() {
             if (currentQuote) {
-                quoteText.innerHTML = ''; // Will be set by speakText
-                quoteAuthor.textContent = currentQuote.author ? `— ${currentQuote.author}` : "— Unknown";
+                // Prepare the reveal text
+                const revealText = currentQuote.show ? 
+                    `The quote is from ${currentQuote.show}` : 
+                    "The show is unknown";
+                
+                // Update subtitle for the reveal
+                updateSubtitle(revealText);
+                
+                // Show answer in quote display
+                quoteText.innerHTML = `"${currentQuote.quote}"`;
+                quoteAuthor.textContent = currentQuote.show ? `From: ${currentQuote.show}` : "From: Unknown Show";
+                quoteDisplay.classList.add('active');
                 
                 // Speak the reveal with subtitles
-                const revealText = currentQuote.author ? 
-                    `The quote was by ${currentQuote.author}` : 
-                    "The author is unknown";
                 speakText(revealText);
                 
                 // Show author after a delay
@@ -462,22 +630,20 @@
             }
         }
 
-        // Fetch a random quote from the API
+        // Fetch a random quote from the new API
         async function fetchRandomQuote() {
             try {
-                const response = await fetch(CORS_PROXY + API_URL);
+                const response = await fetch(API_URL);
                 if (!response.ok) {
                     throw new Error('Failed to fetch quote');
                 }
                 const data = await response.json();
                 
-                // Handle the API response format
-                if (data.Quotes && data.Quotes.length > 0) {
-                    return data.Quotes[0]; // Return first quote in array
-                }
                 return {
                     quote: data.quote || "No quote found",
-                    author: data.author || "Unknown"
+                    show: data.show || "Unknown",
+                    role: data.role || "Unknown Character",
+                    contain_adult_lang: data.contain_adult_lang || false
                 };
             } catch (error) {
                 console.error('Error fetching quote:', error);
@@ -501,18 +667,16 @@
             currentQuote = await fetchRandomQuote();
             
             if (!currentQuote) {
-                quoteText.innerHTML = '<span class="word visible">Failed</span> <span class="word visible">to</span> <span class="word visible">fetch</span> <span class="word visible">quote.</span>';
-                quoteAuthor.textContent = "";
-                quoteDisplay.classList.add('active');
+                updateSubtitle("Failed to fetch quote.");
                 isPlaying = false;
                 
                 resetTimeout = setTimeout(() => {
-                    quoteDisplay.classList.remove('active');
+                    subtitleArea.classList.remove('active');
                 }, 3000);
                 return;
             }
             
-            console.log('Got quote:', currentQuote.quote);
+            console.log('Got quote:', currentQuote);
             speakText(currentQuote.quote);
         });
 
